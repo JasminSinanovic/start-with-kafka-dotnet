@@ -1,0 +1,31 @@
+#!/bin/sh
+set -e
+
+influx version
+echo $CUSTOM_INFLUXDB_V1_USER $CUSTOM_INFLUXDB_V1_PASSWORD $CUSTOM_INFLUXDB_V1_DATABASE $DOCKER_INFLUXDB_INIT_ORG
+
+influx bucket create \
+--name $CUSTOM_INFLUXDB_V1_DATABASE \
+--org $DOCKER_INFLUXDB_INIT_ORG \
+--token $DOCKER_INFLUXDB_INIT_ADMIN_TOKEN
+
+BUCKET_ID=$(influx bucket list \
+--name $CUSTOM_INFLUXDB_V1_DATABASE \
+--token $DOCKER_INFLUXDB_INIT_ADMIN_TOKEN \
+| sed -n '2p' | cut -f1)
+
+influx v1 auth create \
+--username $CUSTOM_INFLUXDB_V1_USER \
+--password $CUSTOM_INFLUXDB_V1_PASSWORD \
+--read-bucket $BUCKET_ID \
+--write-bucket $BUCKET_ID \
+--org $DOCKER_INFLUXDB_INIT_ORG \
+--token $DOCKER_INFLUXDB_INIT_ADMIN_TOKEN
+
+influx v1 dbrp create \
+--db $CUSTOM_INFLUXDB_V1_DATABASE \
+--rp "${CUSTOM_INFLUXDB_V1_DATABASE}-RP" \
+--bucket-id $BUCKET_ID \
+--default \
+--org $DOCKER_INFLUXDB_INIT_ORG \
+--token $DOCKER_INFLUXDB_INIT_ADMIN_TOKEN
